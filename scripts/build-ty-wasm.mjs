@@ -41,6 +41,58 @@ function resolveWasmPackCommand() {
   return "wasm-pack";
 }
 
+function buildWasmPackEnv() {
+  const cargoBinDir = resolveCargoBinDir();
+  const pathEntries = [
+    ...(cargoBinDir ? [cargoBinDir] : []),
+    ...(process.env.PATH ? [process.env.PATH] : []),
+  ];
+
+  return {
+    ...process.env,
+    PATH: pathEntries.join(delimiter),
+  };
+}
+
+function runWasmPackBuild(relativeOutDir) {
+  const env = buildWasmPackEnv();
+  const wasmPackCommand = resolveWasmPackCommand();
+  const wasmPackArgs = [
+    "build",
+    "--target",
+    "web",
+    "--out-dir",
+    relativeOutDir,
+    ".",
+  ];
+
+  const directResult = spawnSync(wasmPackCommand, wasmPackArgs, {
+    cwd: crateDir,
+    env,
+    stdio: "inherit",
+  });
+
+  if (!directResult.error || directResult.error.code !== "ENOENT") {
+    return directResult;
+  }
+
+  const shell = process.env.SHELL || "/usr/bin/bash";
+  return spawnSync(
+    shell,
+    [
+      "-lc",
+      'source "$HOME/.cargo/env" && wasm-pack build --target web --out-dir "$1" .',
+      "bash",
+      relativeOutDir,
+    ],
+    {
+      cwd: crateDir,
+      env,
+      stdio: "inherit",
+    },
+  );
+}
+
 function hasBuiltOutput() {
   return requiredOutputFiles.every((fileName) =>
     existsSync(resolve(outputDir, fileName)),
@@ -60,25 +112,7 @@ export function ensureTyWasmBuilt(options = {}) {
   mkdirSync(outputDir, { recursive: true });
 
   const relativeOutDir = relative(crateDir, outputDir);
-  const wasmPackCommand = resolveWasmPackCommand();
-  const cargoBinDir = resolveCargoBinDir();
-  const pathEntries = [
-    ...(cargoBinDir ? [cargoBinDir] : []),
-    ...(process.env.PATH ? [process.env.PATH] : []),
-  ];
-
-  const result = spawnSync(
-    wasmPackCommand,
-    ["build", "--target", "web", "--out-dir", relativeOutDir, "."],
-    {
-      cwd: crateDir,
-      env: {
-        ...process.env,
-        PATH: pathEntries.join(delimiter),
-      },
-      stdio: "inherit",
-    },
-  );
+  const result = runWasmPackBuild(relativeOutDir);
 
   if (result.error) {
     throw new Error(`failed to start wasm-pack: ${result.error.message}`);

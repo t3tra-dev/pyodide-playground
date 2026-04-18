@@ -49,7 +49,7 @@ jobs:
         run: |
           export PATH="$HOME/.cargo/bin:$PATH"
           source "$HOME/.cargo/env"
-          command -v wasm-pack
+          wasm-pack --version
           node ./scripts/build-ty-wasm.mjs
           npm run build
 
