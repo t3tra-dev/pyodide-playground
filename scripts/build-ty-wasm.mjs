@@ -45,9 +45,14 @@ export function ensureTyWasmBuilt(options = {}) {
     },
   );
 
+  if (result.error) {
+    throw new Error(`failed to start wasm-pack: ${result.error.message}`);
+  }
+
   if (result.status !== 0) {
+    const signalSuffix = result.signal ? ` (signal: ${result.signal})` : "";
     throw new Error(
-      `wasm-pack build failed with exit code ${result.status ?? 1}`,
+      `wasm-pack build failed with exit code ${result.status ?? 1}${signalSuffix}`,
     );
   }
 }
