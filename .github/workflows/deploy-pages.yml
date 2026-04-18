@@ -22,6 +22,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -50,9 +52,11 @@ jobs:
           export PATH="$HOME/.cargo/bin:$PATH"
           source "$HOME/.cargo/env"
           wasm-pack --version
-          cd third-party/ruff/crates/ty_wasm
-          wasm-pack build --target web --out-dir ../../../../.generated/ty-wasm .
-          cd ../../../../
+          REPO_ROOT="${GITHUB_WORKSPACE:-$PWD}"
+          mkdir -p "$REPO_ROOT/.generated/ty-wasm"
+          cd "$REPO_ROOT/third-party/ruff/crates/ty_wasm"
+          wasm-pack build --target web --out-dir "$REPO_ROOT/.generated/ty-wasm" .
+          cd "$REPO_ROOT"
           npm run build
 
       - name: Upload Pages artifact
