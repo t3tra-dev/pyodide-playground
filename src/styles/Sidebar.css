@@ -1,0 +1,100 @@
+:root {
+  --sidebar-expanded-width: 250px;
+  --sidebar-collapsed-width: 50px;
+  --sidebar-transition-duration: 0.24s;
+}
+
+.sidebar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  height: 100vh;
+  border-right: 1px solid rgba(148, 163, 184, 0.12);
+  background: #151922;
+  transition:
+    width var(--sidebar-transition-duration) ease,
+    min-width var(--sidebar-transition-duration) ease;
+}
+
+.sidebar-header {
+  position: relative;
+  display: flex;
+  height: 52px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  background: #11151d;
+  box-sizing: border-box;
+}
+
+.sidebar-title {
+  z-index: 1;
+  max-width: calc(100% - 40px);
+  margin: 0;
+  color: #e6eefc;
+  font-size: 1rem;
+  font-weight: 650;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  transition: opacity var(--sidebar-transition-duration) ease;
+}
+
+.sidebar.collapsed .sidebar-title {
+  width: 0;
+  opacity: 0;
+}
+
+.sidebar.expanded .sidebar-title {
+  width: auto;
+  opacity: 1;
+}
+
+.sidebar-toggle {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  min-width: 32px;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  margin-left: 6px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 4px;
+  background: #1b2130;
+  color: #c9d7ef;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.sidebar-toggle:hover {
+  border-color: rgba(103, 232, 249, 0.3);
+  color: #f8fbff;
+}
+
+.sidebar.collapsed .sidebar-toggle {
+  position: absolute;
+  right: 9px;
+}
+
+.sidebar-content {
+  height: calc(100% - 52px);
+  overflow-y: auto;
+  padding: 12px;
+  transition:
+    opacity var(--sidebar-transition-duration) ease,
+    visibility var(--sidebar-transition-duration) ease;
+}
+
+.sidebar.collapsed .sidebar-content {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.sidebar.expanded .sidebar-content {
+  opacity: 1;
+  visibility: visible;
+}
