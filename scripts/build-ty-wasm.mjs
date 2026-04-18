@@ -25,20 +25,7 @@ function resolveCargoBinDir() {
 }
 
 function resolveWasmPackCommand() {
-  const override = process.env.WASM_PACK_BIN;
-  if (override) {
-    return override;
-  }
-
-  const cargoBinDir = resolveCargoBinDir();
-  if (cargoBinDir) {
-    const cargoWasmPack = resolve(cargoBinDir, "wasm-pack");
-    if (existsSync(cargoWasmPack)) {
-      return cargoWasmPack;
-    }
-  }
-
-  return "wasm-pack";
+  return process.env.WASM_PACK_BIN || "wasm-pack";
 }
 
 function buildWasmPackEnv() {
@@ -66,31 +53,11 @@ function runWasmPackBuild(relativeOutDir) {
     ".",
   ];
 
-  const directResult = spawnSync(wasmPackCommand, wasmPackArgs, {
+  return spawnSync(wasmPackCommand, wasmPackArgs, {
     cwd: crateDir,
     env,
     stdio: "inherit",
   });
-
-  if (!directResult.error || directResult.error.code !== "ENOENT") {
-    return directResult;
-  }
-
-  const shell = process.env.SHELL || "/usr/bin/bash";
-  return spawnSync(
-    shell,
-    [
-      "-lc",
-      'source "$HOME/.cargo/env" && wasm-pack build --target web --out-dir "$1" .',
-      "bash",
-      relativeOutDir,
-    ],
-    {
-      cwd: crateDir,
-      env,
-      stdio: "inherit",
-    },
-  );
 }
 
 function hasBuiltOutput() {

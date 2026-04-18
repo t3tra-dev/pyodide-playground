@@ -50,7 +50,9 @@ jobs:
           export PATH="$HOME/.cargo/bin:$PATH"
           source "$HOME/.cargo/env"
           wasm-pack --version
-          node ./scripts/build-ty-wasm.mjs
+          cd third-party/ruff/crates/ty_wasm
+          wasm-pack build --target web --out-dir ../../../../.generated/ty-wasm .
+          cd ../../../../
           npm run build
 
       - name: Upload Pages artifact
