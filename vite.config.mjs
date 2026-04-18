@@ -31,6 +31,21 @@ function viteStaticCopyPyodide() {
   });
 }
 
+function viteCoiServiceWorkerAsset() {
+  const serviceWorkerPath = fileURLToPath(new URL("./src/coi-serviceworker.min.js", import.meta.url));
+
+  return {
+    name: "coi-service-worker-asset",
+    generateBundle() {
+      this.emitFile({
+        type: "asset",
+        fileName: "coi-serviceworker.min.js",
+        source: readFileSync(serviceWorkerPath),
+      });
+    },
+  };
+}
+
 function getRequestRelativePath(requestUrl, prefix) {
   return decodeURIComponent(requestUrl.slice(prefix.length).split("?")[0]?.split("#")[0] ?? "");
 }
@@ -171,6 +186,7 @@ export default defineConfig({
     react(),
     viteTyWasmBuild(),
     viteStaticCopyPyodide(),
+    viteCoiServiceWorkerAsset(),
     viteVendoredPythonStubAssets(),
   ],
   server: {

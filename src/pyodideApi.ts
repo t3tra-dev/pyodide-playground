@@ -46,7 +46,7 @@ let matplotlibPreparationPromise: Promise<void> | null = null;
 let nextId = 1;
 const pendingRequests = new Map<number, PendingRequest>();
 let stdinRequestCallback: () => Promise<string | null> = async () => "";
-const stdinViews = createStdinBufferViews(new SharedArrayBuffer(STDIN_BUFFER_TOTAL_BYTES));
+let stdinViews: ReturnType<typeof createStdinBufferViews> | null = null;
 const stdinTextEncoder = new TextEncoder();
 const pyodidePackageBaseUrl =
   import.meta.env.VITE_PYODIDE_PACKAGE_BASE_URL ||
@@ -79,6 +79,11 @@ function getVendoredPythonStubsBaseUrl() {
 
 function getId() {
   return nextId++;
+}
+
+function getStdinViews() {
+  stdinViews ??= createStdinBufferViews(new SharedArrayBuffer(STDIN_BUFFER_TOTAL_BYTES));
+  return stdinViews;
 }
 
 function emitStatus(status: StatusType) {
@@ -250,6 +255,7 @@ function handleWorkerMessage(event: MessageEvent) {
           const normalized = value ?? null;
           const encoded =
             normalized === null ? new Uint8Array() : stdinTextEncoder.encode(normalized);
+          const stdinViews = getStdinViews();
           const length = Math.min(encoded.byteLength, stdinViews.payload.byteLength);
           stdinViews.payload.fill(0);
           stdinViews.payload.set(encoded.subarray(0, length));
@@ -258,6 +264,7 @@ function handleWorkerMessage(event: MessageEvent) {
           Atomics.notify(stdinViews.header, 0, 1);
         })
         .catch((error) => {
+          const stdinViews = getStdinViews();
           console.error("Failed to resolve stdin request", error);
           Atomics.store(stdinViews.header, 1, -1);
           Atomics.store(stdinViews.header, 0, 2);
@@ -346,6 +353,7 @@ export async function initializePyodide() {
       installMatplotlibCompat();
       ensureSharedArrayBufferSupport();
       const syncBridge = ensureBridge();
+      const stdinViews = getStdinViews();
 
       workerInitPromise = requestResponse({
         cmd: "init",
