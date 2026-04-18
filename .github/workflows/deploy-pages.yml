@@ -32,10 +32,12 @@ jobs:
       - name: Setup Rust
         run: |
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path --default-toolchain stable
+          export PATH="$HOME/.cargo/bin:$PATH"
           echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
-          source $HOME/.cargo/env
+          source "$HOME/.cargo/env"
           cargo install --locked wasm-pack
           rustup target add wasm32-unknown-unknown
+          wasm-pack --version
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -45,7 +47,9 @@ jobs:
 
       - name: Build site
         run: |
-          source $HOME/.cargo/env
+          export PATH="$HOME/.cargo/bin:$PATH"
+          source "$HOME/.cargo/env"
+          command -v wasm-pack
           node ./scripts/build-ty-wasm.mjs
           npm run build
 

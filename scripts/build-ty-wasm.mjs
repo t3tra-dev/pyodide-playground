@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync } from "node:fs";
-import { dirname, relative, resolve } from "node:path";
+import { delimiter, dirname, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
@@ -13,6 +13,33 @@ const requiredOutputFiles = [
   "ty_wasm.d.ts",
   "package.json",
 ];
+
+function resolveCargoBinDir() {
+  const homeDir = process.env.HOME;
+  if (!homeDir) {
+    return null;
+  }
+
+  const cargoBinDir = resolve(homeDir, ".cargo/bin");
+  return existsSync(cargoBinDir) ? cargoBinDir : null;
+}
+
+function resolveWasmPackCommand() {
+  const override = process.env.WASM_PACK_BIN;
+  if (override) {
+    return override;
+  }
+
+  const cargoBinDir = resolveCargoBinDir();
+  if (cargoBinDir) {
+    const cargoWasmPack = resolve(cargoBinDir, "wasm-pack");
+    if (existsSync(cargoWasmPack)) {
+      return cargoWasmPack;
+    }
+  }
+
+  return "wasm-pack";
+}
 
 function hasBuiltOutput() {
   return requiredOutputFiles.every((fileName) =>
@@ -33,13 +60,21 @@ export function ensureTyWasmBuilt(options = {}) {
   mkdirSync(outputDir, { recursive: true });
 
   const relativeOutDir = relative(crateDir, outputDir);
+  const wasmPackCommand = resolveWasmPackCommand();
+  const cargoBinDir = resolveCargoBinDir();
+  const pathEntries = [
+    ...(cargoBinDir ? [cargoBinDir] : []),
+    ...(process.env.PATH ? [process.env.PATH] : []),
+  ];
+
   const result = spawnSync(
-    "wasm-pack",
+    wasmPackCommand,
     ["build", "--target", "web", "--out-dir", relativeOutDir, "."],
     {
       cwd: crateDir,
       env: {
         ...process.env,
+        PATH: pathEntries.join(delimiter),
       },
       stdio: "inherit",
     },
